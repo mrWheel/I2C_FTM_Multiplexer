@@ -1,48 +1,41 @@
 /*
-    Program : I2C_Multiplexer
-    Date    : 18-10-2019
-*/
+***************************************************************************
+**
+**    Program : I2C_Multiplexer
+**    Date    : 07-11-2019
+**/
 #define _MAJOR_VERSION  1
-#define _MINOR_VERSION  4
-/*
-    Copyright (C) 2019 Willem Aandewiel
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#define _MINOR_VERSION  5
+/**
+**  Copyright (C) 2019 Willem Aandewiel
+**
+**  TERMS OF USE: MIT License. See bottom of file.
+***************************************************************************
 */
 /*
 * You need https://github.com/SpenceKonde/ATTinyCore to compile this source
 *
 * Settings:
 *    Board:  ATmeg328P (Arduino UNO)
+*    Standard Arduino UNO bootloader
 *    Chip:   ATmega328P
 *    Clock:  16 MHz (Ceramic Resonator)
-*    B.O.D. Level: B.O.D. Enabled (1.8v)
-*    B.O.D. Mode (active): B.O.D. Disabled
-*    B.O.D. Mode (sleep): B.O.D. Disabled
-*    Save EEPROM: EEPROM retained
+*    B.O.D. Level: B.O.D. Enabled (1.8v)    [if possible]
+*    B.O.D. Mode (active): B.O.D. Disabled  [if possible]
+*    B.O.D. Mode (sleep): B.O.D. Disabled   [if possible]
+*    Save EEPROM: EEPROM retained           [if possible]
 */
 
-//#include "optiboot.h"
-#include <avr/wdt.h>
-//#include <Arduino.h>
+// #include <avr/wdt.h>
+// #include <Arduino.h>
 #include <Wire.h>
-//#include <EEPROM.h>
+#include <EEPROM.h>
 
 #define _I2C_DEFAULT_ADDRESS  0x48  // 72 dec
 
-#define _LED_ON         0
-#define _LED_OFF        255
-#define MAX_INACTIVE_TIME    10000   // milliSeconds
-#define TESTPIN         15
+#define _LED_ON               0
+#define _LED_OFF              255
+#define MAX_INACTIVE_TIME     5000   // milliSeconds
 
 struct registerLayout {
   byte      status;         // 0x00
@@ -50,7 +43,7 @@ struct registerLayout {
   byte      majorRelease;   // 0x02
   byte      minorRelease;   // 0x03
   byte      lastGpioState;  // 0x04
-  char      filler[4];      // 0x05 .. 0x08
+  byte      filler[4];      // 0x05 .. 0x08
 };
 
 #define _MODESETTINGS   0x15
@@ -63,7 +56,7 @@ volatile registerLayout registerStack = {
   .majorRelease   = _MAJOR_VERSION,       // 0x02
   .minorRelease   = _MINOR_VERSION,       // 0x03
   .lastGpioState  = 0 ,                   // 0x04
-  .filler =  {0xFF, 0xFF, 0xFF,0xFF},     // 0x05 .. 0x08
+  .filler =  {0xFF, 0xFF, 0xFF,0xFF}      // 0x05 .. 0x08
 };
   //----
 byte  I2CMUX_COMMAND         = 0xF0 ; // -> this is NOT a "real" register!!
@@ -74,9 +67,8 @@ uint8_t           *registerPointer = (uint8_t *)&registerStack;
 
 volatile byte     registerNumber; 
 
-////                           <----PD----->  <---PB---> <-----PC----->
-////                  relay    1,2,3,4,5,6,7, 8, 9,10,11,12,13,14,15,16
-//int8_t            p2r[16] = {1,0,3,2,5,4,7, 6, 9, 8,13,10,15,14,17,16} ;
+//volatile uint32_t inactiveTimer;
+
 //                           <----PD-------->  <---PB-->  <-----PC----->
 //                  relay    0, 1,2,3,4,5,6,7, 8,9,10,11, 12,13,14,15
 int8_t            p2r[16] = {16,1,0,3,2,5,4,7, 6,9, 8,13, 10,15,14,17} ;
@@ -112,9 +104,8 @@ void testRelays()
 //==========================================================================
 void reBoot()
 {
-  wdt_reset();
-  //Serial.println("Reboot in 8 seconds");
-  while (true) {}
+  // wdt_reset();
+  // while (true) {}
 
 } //  reBoot()
 
@@ -122,8 +113,8 @@ void reBoot()
 //==========================================================================
 void setup()
 {
-  MCUSR=0x00; //<<<-- keep this in!
-  wdt_disable();
+  // MCUSR=0x00; //<<<-- keep this in!
+  // wdt_disable();
 
   //Serial.begin(115200);     // this is PD0 (RX) and PD1 (TX)
   //Serial.print("\n\n(re)starting I2C Mux Slave ..");
@@ -135,20 +126,23 @@ void setup()
   PORTD = B11111111;  // PD0=D00,PD1=D01,PC2=D02,PC3=D03,PC4=D04,PD5=D05,PD6=D06,PD7=D07
   DDRD  = B11111111;  // set all GPIO pins on PORTD to OUTPUT 
 
-  delay(2000);
+  //delay(2000);
   registerStack.lastGpioState = LOW;    
 
-  digitalWrite(p2r[0], LOW);  // relay 16!!!
-  
+  digitalWrite(p2r[0], _LED_ON);
+  //delay(5000);
+
+  for(int r=1; r < 16; r++) {
+    digitalWrite(p2r[r], _LED_OFF);
+  }
+  //delay(5000);
+  digitalWrite(p2r[0], _LED_OFF);
+    
   readConfig();
 
-  //Serial.print("status       ["); Serial.print(registerStack.status);       Serial.println("]");
-  //Serial.print("whoAmI       ["); Serial.print(registerStack.whoAmI,HEX);   Serial.println("]");
-  //Serial.print("majorRelease ["); Serial.print(registerStack.majorRelease); Serial.println("]");
-  //Serial.print("minorRelease ["); Serial.print(registerStack.minorRelease); Serial.println("]");
   startI2C();
   
-  wdt_enable(WDTO_8S);
+  // inactiveTimer = millis();
 
 } // setup()
 
@@ -156,8 +150,16 @@ void setup()
 //==========================================================================
 void loop()
 {
-
+  /*** it just doesn't work :-(
+  if ((millis() - inactiveTimer) > MAX_INACTIVE_TIME) {
+    wdt_enable(WDTO_1S);  
+    wdt_reset();
+  } else {
+    wdt_disable();
+  }
+  ***/
 } // loop()
+
 
 
 /***************************************************************************
