@@ -13,20 +13,16 @@
 ***************************************************************************
 */
 /*
-*
+*     Use the standard Arduino UNO bootloader
+*     
 * Settings:
-<<<<<<< HEAD
-*    Board:  Arduino/Genuino UNO
-=======
-*    Board:  ATmeg328P (Arduino UNO)
-*    Standard Arduino UNO bootloader
->>>>>>> c636ae614acc3242d947cc4cb34f45025eb2e49f
-*    Chip:   ATmega328P
-*    Clock:  16 MHz (Ceramic Resonator)
-*    B.O.D. Level: B.O.D. Enabled (1.8v)    [if possible]
-*    B.O.D. Mode (active): B.O.D. Disabled  [if possible]
-*    B.O.D. Mode (sleep): B.O.D. Disabled   [if possible]
-*    Save EEPROM: EEPROM retained           [if possible]
+*     Board:  Arduino/Genuino UNO
+*     Chip:   ATmega328P
+*     Clock:  16 MHz (Ceramic Resonator)
+*     B.O.D. Level: B.O.D. Enabled (1.8v)    [if possible]
+*     B.O.D. Mode (active): B.O.D. Disabled  [if possible]
+*     B.O.D. Mode (sleep): B.O.D. Disabled   [if possible]
+*     Save EEPROM: EEPROM retained           [if possible]
 */
 
 // #include <avr/wdt.h>
