@@ -19,10 +19,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
-* You need https://github.com/SpenceKonde/ATTinyCore to compile this source
 *
 * Settings:
-*    Board:  ATmeg328P (Arduino UNO)
+*    Board:  Arduino/Genuino UNO
 *    Chip:   ATmega328P
 *    Clock:  16 MHz (Ceramic Resonator)
 *    B.O.D. Level: B.O.D. Enabled (1.8v)
