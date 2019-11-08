@@ -1,9 +1,9 @@
-/*
+ /*
     Program : I2C_Multiplexer
-    Date    : 18-10-2019
+    Date    : 07-11-2019
 */
 #define _MAJOR_VERSION  1
-#define _MINOR_VERSION  4
+#define _MINOR_VERSION  5
 /*
     Copyright (C) 2019 Willem Aandewiel
 
@@ -31,18 +31,16 @@
 *    Save EEPROM: EEPROM retained
 */
 
-//#include "optiboot.h"
-#include <avr/wdt.h>
-//#include <Arduino.h>
+// #include <avr/wdt.h>
+// #include <Arduino.h>
 #include <Wire.h>
-//#include <EEPROM.h>
+#include <EEPROM.h>
 
 #define _I2C_DEFAULT_ADDRESS  0x48  // 72 dec
 
-#define _LED_ON         0
-#define _LED_OFF        255
-#define MAX_INACTIVE_TIME    10000   // milliSeconds
-#define TESTPIN         15
+#define _LED_ON               0
+#define _LED_OFF              255
+#define MAX_INACTIVE_TIME     5000   // milliSeconds
 
 struct registerLayout {
   byte      status;         // 0x00
@@ -50,7 +48,7 @@ struct registerLayout {
   byte      majorRelease;   // 0x02
   byte      minorRelease;   // 0x03
   byte      lastGpioState;  // 0x04
-  char      filler[4];      // 0x05 .. 0x08
+  byte      filler[4];      // 0x05 .. 0x08
 };
 
 #define _MODESETTINGS   0x15
@@ -63,7 +61,7 @@ volatile registerLayout registerStack = {
   .majorRelease   = _MAJOR_VERSION,       // 0x02
   .minorRelease   = _MINOR_VERSION,       // 0x03
   .lastGpioState  = 0 ,                   // 0x04
-  .filler =  {0xFF, 0xFF, 0xFF,0xFF},     // 0x05 .. 0x08
+  .filler =  {0xFF, 0xFF, 0xFF,0xFF}      // 0x05 .. 0x08
 };
   //----
 byte  I2CMUX_COMMAND         = 0xF0 ; // -> this is NOT a "real" register!!
@@ -74,9 +72,8 @@ uint8_t           *registerPointer = (uint8_t *)&registerStack;
 
 volatile byte     registerNumber; 
 
-////                           <----PD----->  <---PB---> <-----PC----->
-////                  relay    1,2,3,4,5,6,7, 8, 9,10,11,12,13,14,15,16
-//int8_t            p2r[16] = {1,0,3,2,5,4,7, 6, 9, 8,13,10,15,14,17,16} ;
+volatile uint32_t    inactiveTimer;
+
 //                           <----PD-------->  <---PB-->  <-----PC----->
 //                  relay    0, 1,2,3,4,5,6,7, 8,9,10,11, 12,13,14,15
 int8_t            p2r[16] = {16,1,0,3,2,5,4,7, 6,9, 8,13, 10,15,14,17} ;
@@ -112,9 +109,8 @@ void testRelays()
 //==========================================================================
 void reBoot()
 {
-  wdt_reset();
-  //Serial.println("Reboot in 8 seconds");
-  while (true) {}
+  // wdt_reset();
+  // while (true) {}
 
 } //  reBoot()
 
@@ -122,8 +118,8 @@ void reBoot()
 //==========================================================================
 void setup()
 {
-  MCUSR=0x00; //<<<-- keep this in!
-  wdt_disable();
+  // MCUSR=0x00; //<<<-- keep this in!
+  // wdt_disable();
 
   //Serial.begin(115200);     // this is PD0 (RX) and PD1 (TX)
   //Serial.print("\n\n(re)starting I2C Mux Slave ..");
@@ -138,17 +134,21 @@ void setup()
   delay(2000);
   registerStack.lastGpioState = LOW;    
 
+  for(int r=0; r < 16; r++) {
+    digitalWrite(r, LOW);
+  }
+
+  for (uint8_t l=0; l<21; l++) {
+    digitalWrite(13, !digitalRead(13));
+    delay(500);
+  }
   digitalWrite(p2r[0], LOW);  // relay 16!!!
   
   readConfig();
 
-  //Serial.print("status       ["); Serial.print(registerStack.status);       Serial.println("]");
-  //Serial.print("whoAmI       ["); Serial.print(registerStack.whoAmI,HEX);   Serial.println("]");
-  //Serial.print("majorRelease ["); Serial.print(registerStack.majorRelease); Serial.println("]");
-  //Serial.print("minorRelease ["); Serial.print(registerStack.minorRelease); Serial.println("]");
   startI2C();
   
-  wdt_enable(WDTO_8S);
+  inactiveTimer = millis();
 
 } // setup()
 
@@ -156,7 +156,14 @@ void setup()
 //==========================================================================
 void loop()
 {
-
+  /*** it just doesn't work :-(
+  if ((millis() - inactiveTimer) > MAX_INACTIVE_TIME) {
+    wdt_enable(WDTO_1S);  
+    wdt_reset();
+  } else {
+    wdt_disable();
+  }
+  ***/
 } // loop()
 
 
