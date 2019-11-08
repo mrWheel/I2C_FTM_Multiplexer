@@ -1,16 +1,23 @@
-/*
-***************************************************************************
-**
-**    Program : I2C_Multiplexer
-**    Date    : 07-11-2019
-**/
+
+ /*
+    Program : I2C_Multiplexer
+    Date    : 07-11-2019
+*/
 #define _MAJOR_VERSION  1
 #define _MINOR_VERSION  5
-/**
-**  Copyright (C) 2019 Willem Aandewiel
-**
-**  TERMS OF USE: MIT License. See bottom of file.
-***************************************************************************
+/*
+    Copyright (C) 2019 Willem Aandewiel
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
 *     Use the standard Arduino UNO bootloader
@@ -80,6 +87,7 @@ enum  {  CMD_PINMODE, CMD_DIGITALWRITE, CMD_DIGITALREAD
       };
 
 //==========================================================================
+/**
 void testRelays()
 {
   digitalWrite(0, LOW);
@@ -98,6 +106,7 @@ void testRelays()
   }
 
 } //  testRelays()
+**/
 
 
 //==========================================================================
@@ -121,22 +130,15 @@ void setup()
   DDRB  = B00100111;  // set GPIO pins on PORTB to OUTPUT
   PORTC = B00001111;  // PC0=D12,PC1=D13,PC2=D14,PC3=D15
   DDRC  = B00001111;  // set GPIO pins on PORTC to OUTPUT  
-  PORTC = B00001111;  // PC0=D12,PC1=D13,PC2=D14,PC3=D15
   PORTD = B11111111;  // PD0=D00,PD1=D01,PC2=D02,PC3=D03,PC4=D04,PD5=D05,PD6=D06,PD7=D07
   DDRD  = B11111111;  // set all GPIO pins on PORTD to OUTPUT 
 
   //delay(2000);
   registerStack.lastGpioState = LOW;    
 
-  digitalWrite(p2r[0], _LED_ON);
-  //delay(5000);
+  digitalWrite(p2r[0], LOW);  // relay 16!!!
+  
 
-  for(int r=1; r < 16; r++) {
-    digitalWrite(p2r[r], _LED_OFF);
-  }
-  //delay(5000);
-  digitalWrite(p2r[0], _LED_OFF);
-    
   readConfig();
 
   startI2C();
